@@ -1,9 +1,9 @@
-# Validation Jour 1
+# Validation du Jour 1
 
 ## Checklist livrables
 
 - Docker Compose présent : `docker-compose.yml`
-- Services définis : PostgreSQL, MLflow, FastAPI, Streamlit, Prometheus, Grafana
+- Services définis : PostgreSQL, MLflow, FastAPI, Streamlit, Prometheus, Grafana .
 - API de santé : `GET /health`
 - Dashboard de validation : Streamlit
 - Base PostgreSQL initialisée : schéma `lms`

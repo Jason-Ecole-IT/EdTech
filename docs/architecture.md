@@ -1,4 +1,4 @@
-# Architecture projet
+# Architecture du projet
 
 ## Vue d'ensemble
 
