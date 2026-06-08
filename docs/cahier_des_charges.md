@@ -107,7 +107,7 @@ Développer une solution EdTech capable de :
 ## 7. Technologies prévues
 
 | Domaine | Technologies |
-|---|---|
+| --- | --- |
 | Data processing | Python, Pandas |
 | Base de données | PostgreSQL |
 | Machine Learning | scikit-learn, XGBoost |

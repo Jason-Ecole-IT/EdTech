@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # 🎓 EdTech - Analytics Pédagogique & Prédiction Décrochage
 
 Projet de learning analytics pour analyser les données LMS, personnaliser les parcours éducatifs et prédire les risques de décrochage.
@@ -40,26 +39,18 @@ Prometheus/Grafana monitoring
 
 ## Démarrage rapide
 
-1. Copier le fichier d'environnement :
+1. Copier le fichier d'environnement : `Copy-Item .env.example .env`
 
-```powershell
-Copy-Item .env.example .env
-```
-
-2. Lancer les services :
-
-```powershell
-docker compose up --build
-```
+2. Lancer les services : `docker compose up --build`
 
 3. Vérifier les services :
 
-- API : http://localhost:8000
-- Swagger : http://localhost:8000/docs
-- Dashboard Streamlit : http://localhost:8501
-- MLflow : http://localhost:5000
-- Prometheus : http://localhost:9090
-- Grafana : http://localhost:3000
+- API : ``http://localhost:8000``
+- Swagger : ``http://localhost:8000/docs``
+- Dashboard Streamlit : ``http://localhost:8501``
+- MLflow : ``http://localhost:5000``
+- Prometheus : ``http://localhost:9090``
+- Grafana : ``http://localhost:3000``
 
 ## Identifiants Grafana
 
@@ -73,6 +64,3 @@ docker compose up --build
 - Jour 3 : Machine Learning & MLOps
 - Jour 4 : Deployment & API
 - Jour 5 : Monitoring, tests & présentation
-=======
-# EdTech
->>>>>>> 4cf2d3feea0c4e29ff0e43711b428159bb730067
