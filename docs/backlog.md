@@ -1,4 +1,4 @@
-# Backlog Agile initial
+# Backlog Agile
 
 ## Epic 1 - Infrastructure
 

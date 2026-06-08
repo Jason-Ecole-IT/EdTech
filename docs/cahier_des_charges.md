@@ -1,4 +1,4 @@
-# Cahier des charges - Projet EdTech Analytics Pédagogique
+# Le cahier des charges - Projet EdTech Analytics Pédagogique
 
 ## 1. Contexte
 
@@ -10,12 +10,12 @@ Ce projet vise à construire une application intelligente de learning analytics 
 
 Développer une solution EdTech capable de :
 
-- centraliser et transformer des données LMS ;
-- visualiser les indicateurs pédagogiques clés ;
-- prédire le risque de décrochage étudiant ;
-- segmenter les profils d'apprenants ;
-- proposer une base pour la personnalisation des parcours ;
-- suivre les modèles avec une démarche MLOps ;
+- centraliser et transformer des données LMS ,
+- visualiser les indicateurs pédagogiques clés ,
+- prédire le risque de décrochage étudiant ,
+- segmenter les profils d'apprenants ,
+- proposer une base pour la personnalisation des parcours ,
+- suivre les modèles avec une démarche MLOps ,
 - présenter une application démontrable, documentée et monitorée.
 
 ## 3. Objectifs métier
