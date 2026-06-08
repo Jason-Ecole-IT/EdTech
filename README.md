@@ -11,6 +11,13 @@ Projet de learning analytics pour analyser les données LMS, personnaliser les p
 - Backlog Agile initial
 - Premier pipeline technique de validation connectivité
 
+## Documentation projet
+
+- Cahier des charges global : `docs/cahier_des_charges.md`
+- Architecture technique : `docs/architecture.md`
+- Backlog Agile : `docs/backlog.md`
+- Validation Jour 1 : `docs/validation_jour1.md`
+
 ## Architecture technique
 
 ```text
