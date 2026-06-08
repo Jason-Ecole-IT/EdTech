@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🎓 EdTech - Analytics Pédagogique & Prédiction Décrochage
 
 Projet de learning analytics pour analyser les données LMS, personnaliser les parcours éducatifs et prédire les risques de décrochage.
@@ -65,3 +66,6 @@ docker compose up --build
 - Jour 3 : Machine Learning & MLOps
 - Jour 4 : Deployment & API
 - Jour 5 : Monitoring, tests & présentation
+=======
+# EdTech
+>>>>>>> 4cf2d3feea0c4e29ff0e43711b428159bb730067
