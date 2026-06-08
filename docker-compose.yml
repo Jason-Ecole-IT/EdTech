@@ -1,0 +1,96 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: edtech_postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-edtech}
+      POSTGRES_USER: ${POSTGRES_USER:-edtech_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-edtech_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-edtech_user} -d ${POSTGRES_DB:-edtech}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mlflow:
+    build: .
+    container_name: edtech_mlflow
+    command: >
+      mlflow server
+      --host 0.0.0.0
+      --port 5000
+      --backend-store-uri sqlite:////app/mlruns/mlflow.db
+      --default-artifact-root /app/mlruns/artifacts
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlruns:/app/mlruns
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    build: .
+    container_name: edtech_api
+    command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-edtech}
+      POSTGRES_USER: ${POSTGRES_USER:-edtech_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-edtech_password}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mlflow:
+        condition: service_started
+
+  dashboard:
+    build: .
+    container_name: edtech_dashboard
+    command: streamlit run src/dashboard/app.py --server.address 0.0.0.0 --server.port 8501
+    environment:
+      API_URL: http://api:8000
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+    depends_on:
+      - api
+
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    container_name: edtech_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - api
+
+  grafana:
+    image: grafana/grafana:11.0.0
+    container_name: edtech_grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+volumes:
+  postgres_data:
+  grafana_data:
