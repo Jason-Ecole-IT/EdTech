@@ -64,10 +64,7 @@ Prometheus/Grafana monitoring
 - Jour 3 : Machine Learning & MLOps
 - Jour 4 : Deployment & API
 - Jour 5 : Monitoring, tests & présentation
-<<<<<<< Updated upstream
-=======
-=======
-# EdTech
-Lien Data Set : https://www.kaggle.com/datasets/abdullah0a/student-dropout-analysis-and-prediction-dataset
->>>>>>> 4cf2d3feea0c4e29ff0e43711b428159bb730067
->>>>>>> Stashed changes
+
+## EdTech
+
+Lien Data Set : `https://www.kaggle.com/datasets/abdullah0a/student-dropout-analysis-and-prediction-dataset`
