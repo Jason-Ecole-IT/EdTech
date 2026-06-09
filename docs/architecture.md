@@ -1,4 +1,4 @@
-# Architecture projet
+# Architecture du projet
 
 ## Vue d'ensemble
 
@@ -25,7 +25,7 @@ infra/
 ## Services Docker
 
 | Service | Port | Rôle |
-|---|---:|---|
+| --- | ---: | --- |
 | PostgreSQL | 5432 | Stockage données LMS |
 | MLflow | 5000 | Tracking expériences ML |
 | FastAPI | 8000 | API backend et inférence |
