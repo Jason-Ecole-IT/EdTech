@@ -19,7 +19,7 @@ def get_database_status() -> str:
             dbname=os.getenv("POSTGRES_DB", "edtech"),
             user=os.getenv("POSTGRES_USER", "edtech_user"),
             password=os.getenv("POSTGRES_PASSWORD", "edtech_password"),
-            host=os.getenv("POSTGRES_HOST", "postgres"),
+            host=os.getenv("POSTGRES_HOST", "127.0.0.1"),
             port=os.getenv("POSTGRES_PORT", "5432"),
             connect_timeout=3,
         )
@@ -32,7 +32,7 @@ def get_database_status() -> str:
 def get_mlflow_status() -> str:
     try:
         response = requests.get(
-            f"{os.getenv('MLFLOW_TRACKING_URI', 'http://mlflow:5000')}/health",
+            f"{os.getenv('MLFLOW_TRACKING_URI', 'http://127.0.0.1:5000')}/health",
             timeout=3,
         )
         return "connected" if response.ok else "unavailable"
