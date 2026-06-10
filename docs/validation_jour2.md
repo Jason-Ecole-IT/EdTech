@@ -43,7 +43,7 @@ pytest tests/test_pipeline.py -v
 ## Features créées
 
 | Feature | Type | Justification |
-|---|---|---|
+| --- | --- | --- |
 | `academic_performance_score` | Continu | Moyenne pondérée G1×0.25 + G2×0.35 + Final×0.40 |
 | `grade_progression` | Continu | Évolution G1→G2, signal de dynamique scolaire |
 | `alcohol_risk_score` | Continu | Consommation pondérée semaine×0.6 + weekend×0.4 |
@@ -58,7 +58,7 @@ pytest tests/test_pipeline.py -v
 ## Fichiers produits
 
 | Fichier | Description |
-|---|---|
+| --- | --- |
 | `data/processed/students_clean.parquet` | Données nettoyées et encodées |
 | `data/features/students_features.parquet` | Dataset avec toutes les features |
 | `data/features/train.parquet` | Split entraînement avec target |
