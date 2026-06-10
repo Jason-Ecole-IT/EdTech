@@ -22,7 +22,7 @@ python -m pytest tests/test_ml.py -v
 ## Modèles entraînés
 
 | # | Modèle | Description |
-|---|---|---|
+| --- | --- | --- |
 | 1 | `baseline_majority` | DummyClassifier - prédit toujours la classe majoritaire |
 | 2 | `logistic_regression` | Régression logistique avec class_weight=balanced |
 | 3 | `random_forest_v1` | Random Forest 100 arbres, max_depth=10 |
@@ -32,16 +32,16 @@ python -m pytest tests/test_ml.py -v
 
 ## Métriques de sélection
 
-**Métrique primaire : F1-score (pondéré)**
+### Métrique primaire : F1-score (pondéré)
 
 Justification : le dataset est déséquilibré (85% actifs, 15% décrochés).
 L'accuracy seule serait trompeuse — prédire toujours "actif" donnerait 85% d'accuracy.
 Le F1 équilibre précision et rappel, adapté à la détection de cas minoritaires.
 
-**Score composite (pondéré) :**
+### Score composite (pondéré)
 
 | Métrique | Poids |
-|---|---|
+| --- | --- |
 | F1-score | 40% |
 | ROC-AUC | 30% |
 | Accuracy | 20% |
@@ -50,7 +50,7 @@ Le F1 équilibre précision et rappel, adapté à la détection de cas minoritai
 ## Tests de validation
 
 | Test | Description |
-|---|---|
+| --- | --- |
 | Prédictions sans NaN/Inf | Sanité des sorties |
 | Reproductibilité | 2 appels = résultats identiques |
 | Classes de sortie {0,1} | Contrainte domaine |
@@ -68,7 +68,7 @@ Le F1 équilibre précision et rappel, adapté à la détection de cas minoritai
 ## Fichiers produits
 
 | Fichier | Description |
-|---|---|
+| --- | --- |
 | `data/processed/model_comparison.csv` | Tableau comparatif des modèles |
 | `data/processed/model_selection_justification.txt` | Justification sélection |
 | `data/processed/model_validation_report.json` | Rapport tests validation |

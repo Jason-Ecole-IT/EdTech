@@ -2,20 +2,15 @@
 
 Projet de learning analytics pour analyser les données LMS, personnaliser les parcours éducatifs et prédire les risques de décrochage.
 
-## Livrables Jour 1
-
-- Docker Compose opérationnel
-- Services communicants : PostgreSQL, MLflow, FastAPI, Streamlit, Prometheus, Grafana
-- Architecture projet validable
-- Backlog Agile initial
-- Premier pipeline technique de validation connectivité
-
 ## Documentation projet
 
 - Cahier des charges global : `docs/cahier_des_charges.md`
 - Architecture technique : `docs/architecture.md`
 - Backlog Agile : `docs/backlog.md`
 - Validation Jour 1 : `docs/validation_jour1.md`
+- Validation Jour 2 : `docs/validation_jour2.md`
+- Validation Jour 3 : `docs/validation_jour3.md`
+- Daily meetings : `docs/daily/`
 
 ## Architecture technique
 
@@ -51,6 +46,11 @@ Prometheus/Grafana monitoring
 - MLflow : ``http://localhost:5000``
 - Prometheus : ``http://localhost:9090``
 - Grafana : ``http://localhost:3000``
+
+## Lancer les différents pipelines
+
+- Data pipeline : `python -m src.data.pipeline`
+- ML Pipeline : `python -m src.ml.pipeline`
 
 ## Identifiants Grafana
 
