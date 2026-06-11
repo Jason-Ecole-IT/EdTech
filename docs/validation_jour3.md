@@ -21,14 +21,14 @@ python -m pytest tests/test_ml.py -v
 
 ## Modèles entraînés
 
-| # | Modèle | Description |
-| --- | --- | --- |
-| 1 | `baseline_majority` | DummyClassifier - prédit toujours la classe majoritaire |
-| 2 | `logistic_regression` | Régression logistique avec class_weight=balanced |
-| 3 | `random_forest_v1` | Random Forest 100 arbres, max_depth=10 |
-| 4 | `random_forest_v2` | Random Forest 200 arbres, max_depth=15 (optimisé) |
-| 5 | `gradient_boosting` | GradientBoostingClassifier sklearn |
-| 6 | `xgboost` | XGBoost 200 estimateurs, learning_rate=0.1 |
+| #   | Modèle                | Description                                             |
+| --- | --------------------- | ------------------------------------------------------- |
+| 1   | `baseline_majority`   | DummyClassifier - prédit toujours la classe majoritaire |
+| 2   | `logistic_regression` | Régression logistique avec class_weight=balanced        |
+| 3   | `random_forest_v1`    | Random Forest 100 arbres, max_depth=10                  |
+| 4   | `random_forest_v2`    | Random Forest 200 arbres, max_depth=15 (optimisé)       |
+| 5   | `gradient_boosting`   | GradientBoostingClassifier sklearn                      |
+| 6   | `xgboost`             | XGBoost 200 estimateurs, learning_rate=0.1              |
 
 ## Métriques de sélection
 
@@ -41,23 +41,23 @@ Le F1 équilibre précision et rappel, adapté à la détection de cas minoritai
 ### Score composite (pondéré)
 
 | Métrique | Poids |
-| --- | --- |
-| F1-score | 40% |
-| ROC-AUC | 30% |
-| Accuracy | 20% |
-| Recall | 10% |
+| -------- | ----- |
+| F1-score | 40%   |
+| ROC-AUC  | 30%   |
+| Accuracy | 20%   |
+| Recall   | 10%   |
 
 ## Tests de validation
 
-| Test | Description |
-| --- | --- |
-| Prédictions sans NaN/Inf | Sanité des sorties |
-| Reproductibilité | 2 appels = résultats identiques |
-| Classes de sortie {0,1} | Contrainte domaine |
-| Prédiction échantillon unique | Robustesse |
-| Taille sortie = taille entrée | Cohérence dimensionnelle |
-| Probabilités dans [0,1] | Calibration |
-| Sensibilité aux features | Le modèle réagit aux entrées |
+| Test                          | Description                     |
+| ----------------------------- | ------------------------------- |
+| Prédictions sans NaN/Inf      | Sanité des sorties              |
+| Reproductibilité              | 2 appels = résultats identiques |
+| Classes de sortie {0,1}       | Contrainte domaine              |
+| Prédiction échantillon unique | Robustesse                      |
+| Taille sortie = taille entrée | Cohérence dimensionnelle        |
+| Probabilités dans [0,1]       | Calibration                     |
+| Sensibilité aux features      | Le modèle réagit aux entrées    |
 
 ## MLflow Registry
 
@@ -67,15 +67,27 @@ Le F1 équilibre précision et rappel, adapté à la détection de cas minoritai
 
 ## Fichiers produits
 
-| Fichier | Description |
-| --- | --- |
-| `data/processed/model_comparison.csv` | Tableau comparatif des modèles |
-| `data/processed/model_selection_justification.txt` | Justification sélection |
-| `data/processed/model_validation_report.json` | Rapport tests validation |
-| `data/processed/jour3_summary.json` | Résumé complet Jour 3 |
-| `data/processed/pipeline_ml.log` | Logs d'exécution |
-| `models/registry_info.json` | Infos modèle enregistré |
-| `models/*_feature_importance.json` | Importance des features par modèle |
+| Fichier                                            | Description                        |
+| -------------------------------------------------- | ---------------------------------- |
+| `data/processed/model_comparison.csv`              | Tableau comparatif des modèles     |
+| `data/processed/model_selection_justification.txt` | Justification sélection            |
+| `data/processed/model_validation_report.json`      | Rapport tests validation           |
+| `data/processed/jour3_summary.json`                | Résumé complet Jour 3              |
+| `data/processed/pipeline_ml.log`                   | Logs d'exécution                   |
+| `models/registry_info.json`                        | Infos modèle enregistré            |
+| `models/*_feature_importance.json`                 | Importance des features par modèle |
+
+## Résultats
+
+| params.model_name   | metrics.accuracy | metrics.f1 | metrics.roc_auc | metrics.precision | metrics.recall |
+| ------------------- | ---------------- | ---------- | --------------- | ----------------- | -------------- |
+| gradient_boosting   | 1.0000           | 1.0000     | 1.0000          | 1.0000            | 1.0000         |
+| random_forest_v2    | 0.9923           | 0.9922     | 0.9977          | 0.9924            | 0.9923         |
+| random_forest_v1    | 0.9923           | 0.9922     | 0.9973          | 0.9924            | 0.9923         |
+| logistic_regression | 0.9462           | 0.9477     | 0.9791          | 0.9507            | 0.9462         |
+| baseline_majority   | 0.8462           | 0.7756     | 0.5000          | 0.7160            | 0.8462         |
+
+Suite a l'analyse des métriques, le modèle `gradient_boosting` a été sélectionné pour sa performance supérieure sur le F1-score (1.0000) et un excellent équilibre entre précision et rappel, ce qui est crucial pour notre cas d'usage de prédiction de décrochage.
 
 ## Prochaine étape
 
