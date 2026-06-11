@@ -163,8 +163,6 @@ with tab2:
                                 "romantic": student.get("romantic", student.get("In_Relationship", "no")),
                             }
                             cleaned_students.append(cleaned)
-                        st.write(f"Testing with {len(cleaned_students)} students")
-                        st.write("Sample cleaned payload:", cleaned_students[0] if cleaned_students else {})
                         try:
                             r = requests.post(f"{API_URL}/batch_predict", json=cleaned_students, timeout=30)
                             r.raise_for_status()
