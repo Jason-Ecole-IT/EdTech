@@ -68,8 +68,8 @@ def load_model_from_registry():
     """Charge le modele directement avec pickle."""
     try:
         import pickle
-        # Utiliser LogisticRegression (mieux calibre que RandomForest)
-        model_path = "mlruns/artifacts/1/models/m-1818597eede54d468483db078f53eef9/artifacts/model.pkl"
+        # Utiliser RandomForest (LogisticRegression casse - retourne 0% pour tout le monde)
+        model_path = "mlruns/artifacts/1/models/m-bc00d2a88b4c4b4689c455e99e0c9b6d/artifacts/model.pkl"
         logger.info(f"Chargement du modele depuis {model_path}")
         with open(model_path, "rb") as f:
             model = pickle.load(f)
@@ -77,9 +77,9 @@ def load_model_from_registry():
         return model
     except Exception as e:
         logger.error(f"Erreur chargement modele: {e}")
-        # Fallback random_forest
+        # Fallback gradient_boosting
         try:
-            model_path = "mlruns/artifacts/1/models/m-bc00d2a88b4c4b4689c455e99e0c9b6d/artifacts/model.pkl"
+            model_path = "mlruns/artifacts/1/models/m-ce58e543a18b41a28c77cf9fa6b3ec58/artifacts/model.pkl"
             logger.info(f"Tentative chargement depuis: {model_path}")
             with open(model_path, "rb") as f:
                 model = pickle.load(f)
@@ -209,7 +209,7 @@ def predict_single(features: StudentFeatures) -> PredictionResponse:
     except AttributeError:
         # Si le modele n'a pas predict_proba, utiliser predict
         pred_proba = model.predict(df)[0]
-    pred = int(pred_proba > 0.1)  # Seuil 10% - modeles mal calibres (dataset desequilibre 15% dropout)
+    pred = int(pred_proba > 0.02)  # Seuil 2% - RandomForest donne des probas tres basses (3-12%)
 
     # Confidence
     if pred_proba < 0.4:
@@ -245,7 +245,7 @@ def predict_batch(features_list: List[StudentFeatures]) -> List[PredictionRespon
     predictions = []
 
     for i, prob in enumerate(pred_probas):
-        pred = int(prob > 0.1)  # Seuil 10% - modeles mal calibres (dataset desequilibre 15% dropout)
+        pred = int(prob > 0.02)  # Seuil 2% - RandomForest donne des probas tres basses (3-12%)
         if prob < 0.4:
             conf = "Faible"
         elif prob < 0.6:
