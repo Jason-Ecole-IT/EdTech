@@ -173,9 +173,12 @@ with tab2:
                             df_sample["prediction"] = ["Dropout" if r["prediction"] == 1 else "Active" for r in results]
                             df_sample["probability"] = [f"{r['probability']*100:.1f}%" for r in results]
                             df_sample["confidence"] = [r["confidence"] for r in results]
+                            # Afficher uniquement les colonnes demandées
+                            columns_to_show = ["school", "sex", "age", "absences", "grade_1", "grade_2", "final_grade", "prediction", "probability", "confidence"]
+                            df_display = df_sample[columns_to_show].copy()
                             st.success(f"Predictions completed for {len(results)} students!")
-                            st.dataframe(df_sample, use_container_width=True)
-                            csv = df_sample.to_csv(index=False)
+                            st.dataframe(df_display, use_container_width=True)
+                            csv = df_display.to_csv(index=False)
                             st.download_button("📥 Download Results", csv, "predictions.csv", "text/csv")
                         except Exception as e:
                             st.error(f"Batch prediction error: {e}")
