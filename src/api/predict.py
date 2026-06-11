@@ -65,21 +65,23 @@ class PredictionResponse(BaseModel):
 
 
 def load_model_from_registry():
-    """Charge le modele depuis les artifacts locaux."""
+    """Charge le modele directement avec pickle."""
     try:
-        # Charger le modele gradient_boosting le plus recent
-        model_uri = "mlruns/artifacts/1/models/m-ce58e543a18b41a28c77cf9fa6b3ec58/artifacts"
-        logger.info(f"Chargement du modele depuis {model_uri}")
-        model = mlflow.pyfunc.load_model(model_uri)
+        import pickle
+        model_path = "mlruns/artifacts/1/models/m-ce58e543a18b41a28c77cf9fa6b3ec58/artifacts/model.pkl"
+        logger.info(f"Chargement du modele depuis {model_path}")
+        with open(model_path, "rb") as f:
+            model = pickle.load(f)
         logger.info("Modele charge avec succes")
         return model
     except Exception as e:
         logger.error(f"Erreur chargement modele: {e}")
-        # Fallback: essayer un autre modele
+        # Fallback
         try:
-            model_uri = "mlruns/artifacts/1/models/m-bc00d2a88b4c4b4689c455e99e0c9b6d/artifacts"
-            logger.info(f"Tentative chargement depuis: {model_uri}")
-            model = mlflow.pyfunc.load_model(model_uri)
+            model_path = "mlruns/artifacts/1/models/m-bc00d2a88b4c4b4689c455e99e0c9b6d/artifacts/model.pkl"
+            logger.info(f"Tentative chargement depuis: {model_path}")
+            with open(model_path, "rb") as f:
+                model = pickle.load(f)
             logger.info("Modele charge avec succes")
             return model
         except Exception as e2:
@@ -186,8 +188,15 @@ def predict_single(features: StudentFeatures) -> PredictionResponse:
     feature_dict = build_feature_dict(features)
     df = pd.DataFrame([feature_dict])
 
+    # Désactiver la vérification des noms de features
+    df = df.reindex(columns=model.feature_names_in_, fill_value=0)
+
     # Prediction
-    pred_proba = model.predict(df)[0]
+    try:
+        pred_proba = model.predict_proba(df)[0, 1]  # probabilité de classe positive
+    except AttributeError:
+        # Si le modele n'a pas predict_proba, utiliser predict
+        pred_proba = model.predict(df)[0]
     pred = int(pred_proba > 0.5)
 
     # Confidence
@@ -213,7 +222,14 @@ def predict_batch(features_list: List[StudentFeatures]) -> List[PredictionRespon
     feature_dicts = [build_feature_dict(f) for f in features_list]
     df = pd.DataFrame(feature_dicts)
 
-    pred_probas = model.predict(df)
+    # Reindexer les features pour correspondre exactement aux noms attendus par le modele
+    df = df.reindex(columns=model.feature_names_in_, fill_value=0)
+
+    try:
+        pred_probas = model.predict_proba(df)[:, 1]  # probabilité de classe positive
+    except AttributeError:
+        pred_probas = model.predict(df)
+
     predictions = []
 
     for i, prob in enumerate(pred_probas):
