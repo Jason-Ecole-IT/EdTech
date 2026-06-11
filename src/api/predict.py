@@ -68,8 +68,8 @@ def load_model_from_registry():
     """Charge le modele directement avec pickle."""
     try:
         import pickle
-        # Utiliser RandomForest (LogisticRegression casse - retourne 0% pour tout le monde)
-        model_path = "mlruns/artifacts/1/models/m-bc00d2a88b4c4b4689c455e99e0c9b6d/artifacts/model.pkl"
+        # Utiliser RandomForest avec class_weight='balanced' (mieux calibre)
+        model_path = "mlruns/artifacts/1/models/random_forest_balanced/model.pkl"
         logger.info(f"Chargement du modele depuis {model_path}")
         with open(model_path, "rb") as f:
             model = pickle.load(f)
@@ -77,9 +77,9 @@ def load_model_from_registry():
         return model
     except Exception as e:
         logger.error(f"Erreur chargement modele: {e}")
-        # Fallback gradient_boosting
+        # Fallback random_forest_v2
         try:
-            model_path = "mlruns/artifacts/1/models/m-ce58e543a18b41a28c77cf9fa6b3ec58/artifacts/model.pkl"
+            model_path = "mlruns/artifacts/1/models/m-bc00d2a88b4c4b4689c455e99e0c9b6d/artifacts/model.pkl"
             logger.info(f"Tentative chargement depuis: {model_path}")
             with open(model_path, "rb") as f:
                 model = pickle.load(f)
@@ -102,95 +102,43 @@ def get_model():
 
 
 def build_feature_dict(features: StudentFeatures) -> dict:
-    """Construit le dictionnaire de features pour le modele.
-
-    Le modele attend 61 features one-hot encoded comme dans le pipeline Jour 2.
-    """
+    """Construit le dictionnaire de features pour le modele balanced (colonnes brutes)."""
+    # Mapping direct des colonnes brutes
     base = {
+        "School": features.school,
+        "Gender": features.sex,
         "Age": features.age,
+        "Address": features.address,
+        "Family_Size": features.famsize,
+        "Parental_Status": features.pstatus,
+        "Mother_Education": features.mother_edu,
+        "Father_Education": features.father_edu,
+        "Mother_Job": features.mother_job,
+        "Father_Job": features.father_job,
+        "Reason_for_Choosing_School": "course",  # default
+        "Guardian": "mother",  # default
         "Travel_Time": features.travel_time,
         "Study_Time": features.study_time,
         "Number_of_Failures": features.failures,
+        "School_Support": features.schoolsup,
+        "Family_Support": features.famsup,
+        "Extra_Paid_Class": features.paid,
+        "Extra_Curricular_Activities": features.activities,
+        "Attended_Nursery": features.nursery,
+        "Wants_Higher_Education": features.higher,
+        "Internet_Access": features.internet,
+        "In_Relationship": features.romantic,
         "Family_Relationship": features.family_rel,
         "Free_Time": features.free_time,
         "Going_Out": features.going_out,
-        "Weekday_Alcohol_Consumption": features.weekday_alcohol,
         "Weekend_Alcohol_Consumption": features.weekend_alcohol,
+        "Weekday_Alcohol_Consumption": features.weekday_alcohol,
         "Health_Status": features.health,
         "Number_of_Absences": features.absences,
         "Grade_1": features.grade_1,
         "Grade_2": features.grade_2,
         "Final_Grade": features.final_grade,
-        "Mother_Education": features.mother_edu,
-        "Father_Education": features.father_edu,
     }
-
-    # One-hot encoding des variables categorielles
-    base["School_GP"] = 1 if features.school == "GP" else 0
-    base["School_MS"] = 1 if features.school == "MS" else 0
-    base["Sex_M"] = 1 if features.sex == "M" else 0
-    base["Sex_F"] = 1 if features.sex == "F" else 0
-    base["Address_R"] = 1 if features.address == "R" else 0
-    base["Address_U"] = 1 if features.address == "U" else 0
-    base["Family_Size_LE3"] = 1 if features.famsize == "LE3" else 0
-    base["Family_Size_GT3"] = 1 if features.famsize == "GT3" else 0
-    base["Parent_Status_T"] = 1 if features.pstatus == "T" else 0
-    base["Parent_Status_A"] = 1 if features.pstatus == "A" else 0
-    base["School_Support_yes"] = 1 if features.schoolsup == "yes" else 0
-    base["School_Support_no"] = 1 if features.schoolsup == "no" else 0
-    base["Family_Support_yes"] = 1 if features.famsup == "yes" else 0
-    base["Family_Support_no"] = 1 if features.famsup == "no" else 0
-    base["Paid_Classes_yes"] = 1 if features.paid == "yes" else 0
-    base["Paid_Classes_no"] = 1 if features.paid == "no" else 0
-    base["Extra_Curricular_Activities_yes"] = 1 if features.activities == "yes" else 0
-    base["Extra_Curricular_Activities_no"] = 1 if features.activities == "no" else 0
-    base["Attended_Nursery_yes"] = 1 if features.nursery == "yes" else 0
-    base["Attended_Nursery_no"] = 1 if features.nursery == "no" else 0
-    base["Wants_Higher_Education_yes"] = 1 if features.higher == "yes" else 0
-    base["Wants_Higher_Education_no"] = 1 if features.higher == "no" else 0
-    base["Internet_Access_yes"] = 1 if features.internet == "yes" else 0
-    base["Internet_Access_no"] = 1 if features.internet == "no" else 0
-    base["Romantic_Relationship_yes"] = 1 if features.romantic == "yes" else 0
-    base["Romantic_Relationship_no"] = 1 if features.romantic == "no" else 0
-
-    # Jobs one-hot (valeurs possibles)
-    jobs = ["teacher", "health", "services", "at_home", "other"]
-    for job in jobs:
-        base[f"Mother_Job_{job}"] = 1 if features.mother_job == job else 0
-        base[f"Father_Job_{job}"] = 1 if features.father_job == job else 0
-
-    # Features engineered
-    avg_grade = (features.grade_1 + features.grade_2) / 2
-    academic_score = (avg_grade + features.final_grade) / 2
-
-    base.update(
-        {
-            "academic_performance_score": academic_score,
-            "grade_progression": features.final_grade - avg_grade,
-            "combined_risk_score": (
-                features.failures * 2
-                + features.absences * 0.5
-                + (5 - features.family_rel) * 0.3
-            ),
-            "failure_history_flag": 1 if features.failures > 0 else 0,
-            "engagement_score": features.study_time + (5 - features.free_time),
-            "social_risk_index": features.weekday_alcohol + features.weekend_alcohol,
-            "alcohol_risk_score": (features.weekday_alcohol + features.weekend_alcohol) / 2,
-            "parental_education_level": (features.mother_edu + features.father_edu) / 2,
-            "family_support_score": 1 if features.famsup == "yes" else 0,
-            "absence_risk_flag": 1 if features.absences > 10 else 0,
-        }
-    )
-
-    # Features manquants du modele (valeurs par defaut)
-    base["Reason_for_Choosing_School_course"] = 0
-    base["Reason_for_Choosing_School_home"] = 0
-    base["Reason_for_Choosing_School_other"] = 1  # default
-    base["Reason_for_Choosing_School_reputation"] = 0
-    base["Guardian_father"] = 0
-    base["Guardian_mother"] = 1  # default
-    base["Guardian_other"] = 0
-
     return base
 
 
@@ -199,6 +147,20 @@ def predict_single(features: StudentFeatures) -> PredictionResponse:
     model = get_model()
     feature_dict = build_feature_dict(features)
     df = pd.DataFrame([feature_dict])
+
+    # Charger et appliquer les encoders pour les variables catégorielles
+    try:
+        import pickle
+        encoders_path = "mlruns/artifacts/1/models/random_forest_balanced/encoders.pkl"
+        with open(encoders_path, "rb") as f:
+            encoders = pickle.load(f)
+        
+        # Appliquer l'encodage aux colonnes catégorielles
+        for col, encoder in encoders.items():
+            if col in df.columns:
+                df[col] = encoder.transform(df[col])
+    except Exception as e:
+        logger.warning(f"Impossible de charger les encoders: {e}, utilisation des valeurs brutes")
 
     # Désactiver la vérification des noms de features
     df = df.reindex(columns=model.feature_names_in_, fill_value=0)
@@ -209,7 +171,7 @@ def predict_single(features: StudentFeatures) -> PredictionResponse:
     except AttributeError:
         # Si le modele n'a pas predict_proba, utiliser predict
         pred_proba = model.predict(df)[0]
-    pred = int(pred_proba > 0.02)  # Seuil 2% - RandomForest donne des probas tres basses (3-12%)
+    pred = int(pred_proba > 0.5)  # Seuil standard 50% - modele bien calibre avec class_weight='balanced'
 
     # Confidence
     if pred_proba < 0.4:
@@ -234,6 +196,20 @@ def predict_batch(features_list: List[StudentFeatures]) -> List[PredictionRespon
     feature_dicts = [build_feature_dict(f) for f in features_list]
     df = pd.DataFrame(feature_dicts)
 
+    # Charger et appliquer les encoders pour les variables catégorielles
+    try:
+        import pickle
+        encoders_path = "mlruns/artifacts/1/models/random_forest_balanced/encoders.pkl"
+        with open(encoders_path, "rb") as f:
+            encoders = pickle.load(f)
+        
+        # Appliquer l'encodage aux colonnes catégorielles
+        for col, encoder in encoders.items():
+            if col in df.columns:
+                df[col] = encoder.transform(df[col])
+    except Exception as e:
+        logger.warning(f"Impossible de charger les encoders: {e}, utilisation des valeurs brutes")
+
     # Reindexer les features pour correspondre exactement aux noms attendus par le modele
     df = df.reindex(columns=model.feature_names_in_, fill_value=0)
 
@@ -245,7 +221,7 @@ def predict_batch(features_list: List[StudentFeatures]) -> List[PredictionRespon
     predictions = []
 
     for i, prob in enumerate(pred_probas):
-        pred = int(prob > 0.02)  # Seuil 2% - RandomForest donne des probas tres basses (3-12%)
+        pred = int(prob > 0.5)  # Seuil standard 50% - modele bien calibre avec class_weight='balanced'
         if prob < 0.4:
             conf = "Faible"
         elif prob < 0.6:
