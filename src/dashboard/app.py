@@ -32,7 +32,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-tab1, tab2 = st.tabs(["Single Student", "Batch Upload"])
+tab1, tab2, tab3 = st.tabs(["Single Student", "Batch Upload", "Students at Risk"])
 
 with tab1:
     st.markdown("### Predict for a Single Student")
@@ -123,7 +123,7 @@ with tab2:
                 st.error(f"Missing required columns: {missing}")
             else:
                 st.success("All required columns found!")
-                sample_size = st.number_input("Sample size (for testing)", min_value=1, max_value=len(df), value=10)
+                sample_size = st.number_input("Sample size (leave empty for all)", min_value=1, max_value=len(df), value=len(df))
                 if st.button("🚀 Predict All", type="primary"):
                     with st.spinner("Predicting..."):
                         students = df.head(sample_size).to_dict("records")
@@ -176,6 +176,8 @@ with tab2:
                             # Afficher uniquement les colonnes demandées
                             columns_to_show = ["school", "sex", "age", "absences", "grade_1", "grade_2", "final_grade", "prediction", "probability", "confidence"]
                             df_display = df_sample[columns_to_show].copy()
+                            # Sauvegarder dans session_state pour l'onglet Students at Risk
+                            st.session_state["batch_results"] = df_display.copy()
                             st.success(f"Predictions completed for {len(results)} students!")
                             st.dataframe(df_display, use_container_width=True)
                             csv = df_display.to_csv(index=False)
@@ -188,3 +190,48 @@ with tab2:
             st.error(f"Error reading CSV: {e}")
     else:
         st.info("Upload a CSV file with student data.")
+
+with tab3:
+    st.markdown("### 🚨 Students at Risk (Dropout)")
+
+    if "batch_results" in st.session_state and st.session_state["batch_results"] is not None:
+        df_risk = st.session_state["batch_results"]
+
+        # Filtres
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            min_age = st.number_input("Min Age", min_value=15, max_value=30, value=15)
+            max_age = st.number_input("Max Age", min_value=15, max_value=30, value=30)
+        with col2:
+            school_filter = st.selectbox("School", ["All", "GP", "MS"])
+            sex_filter = st.selectbox("Sex", ["All", "M", "F"])
+        with col3:
+            min_prob = st.slider("Min Dropout Probability", 0.0, 1.0, 0.5, 0.1)
+
+        # Appliquer les filtres
+        df_filtered = df_risk.copy()
+        df_filtered = df_filtered[(df_filtered["age"] >= min_age) & (df_filtered["age"] <= max_age)]
+        if school_filter != "All":
+            df_filtered = df_filtered[df_filtered["school"] == school_filter]
+        if sex_filter != "All":
+            df_filtered = df_filtered[df_filtered["sex"] == sex_filter]
+
+        # Filtrer par probabilité de dropout
+        df_filtered["prob_value"] = df_filtered["probability"].str.rstrip("%").astype(float) / 100
+        df_filtered = df_filtered[df_filtered["prob_value"] >= min_prob]
+
+        # Afficher uniquement les étudiants en décrochage
+        df_risk_only = df_filtered[df_filtered["prediction"] == "Dropout"].copy()
+        df_risk_only = df_risk_only.drop(columns=["prob_value"])
+
+        risk_columns = ["school", "sex", "age", "absences", "grade_1", "grade_2", "final_grade", "prediction", "probability", "confidence"]
+
+        if not df_risk_only.empty:
+            st.success(f"Found {len(df_risk_only)} students at risk")
+            st.dataframe(df_risk_only[risk_columns], use_container_width=True)
+            csv_risk = df_risk_only[risk_columns].to_csv(index=False)
+            st.download_button("📥 Download At-Risk Students", csv_risk, "at_risk_students.csv", "text/csv")
+        else:
+            st.warning("No students at risk match the filters")
+    else:
+        st.info("No prediction results available. Upload and predict a CSV file first.")
