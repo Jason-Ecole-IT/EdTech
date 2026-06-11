@@ -68,7 +68,8 @@ def load_model_from_registry():
     """Charge le modele directement avec pickle."""
     try:
         import pickle
-        model_path = "mlruns/artifacts/1/models/m-ce58e543a18b41a28c77cf9fa6b3ec58/artifacts/model.pkl"
+        # Utiliser random_forest_v2 (plus realiste que gradient_boosting overfitted)
+        model_path = "mlruns/artifacts/1/models/m-bc00d2a88b4c4b4689c455e99e0c9b6d/artifacts/model.pkl"
         logger.info(f"Chargement du modele depuis {model_path}")
         with open(model_path, "rb") as f:
             model = pickle.load(f)
@@ -78,7 +79,7 @@ def load_model_from_registry():
         logger.error(f"Erreur chargement modele: {e}")
         # Fallback
         try:
-            model_path = "mlruns/artifacts/1/models/m-bc00d2a88b4c4b4689c455e99e0c9b6d/artifacts/model.pkl"
+            model_path = "mlruns/artifacts/1/models/m-ce58e543a18b41a28c77cf9fa6b3ec58/artifacts/model.pkl"
             logger.info(f"Tentative chargement depuis: {model_path}")
             with open(model_path, "rb") as f:
                 model = pickle.load(f)
@@ -176,8 +177,19 @@ def build_feature_dict(features: StudentFeatures) -> dict:
             "social_risk_index": features.weekday_alcohol + features.weekend_alcohol,
             "alcohol_risk_score": (features.weekday_alcohol + features.weekend_alcohol) / 2,
             "parental_education_level": (features.mother_edu + features.father_edu) / 2,
+            "family_support_score": 1 if features.famsup == "yes" else 0,
+            "absence_risk_flag": 1 if features.absences > 10 else 0,
         }
     )
+
+    # Features manquants du modele (valeurs par defaut)
+    base["Reason_for_Choosing_School_course"] = 0
+    base["Reason_for_Choosing_School_home"] = 0
+    base["Reason_for_Choosing_School_other"] = 1  # default
+    base["Reason_for_Choosing_School_reputation"] = 0
+    base["Guardian_father"] = 0
+    base["Guardian_mother"] = 1  # default
+    base["Guardian_other"] = 0
 
     return base
 
@@ -197,7 +209,7 @@ def predict_single(features: StudentFeatures) -> PredictionResponse:
     except AttributeError:
         # Si le modele n'a pas predict_proba, utiliser predict
         pred_proba = model.predict(df)[0]
-    pred = int(pred_proba > 0.3)  # Baisser seuil de 0.5 à 0.3 pour détecter plus de risques
+    pred = int(pred_proba > 0.05)  # Seuil tres bas (5%) car modele trop conservateur
 
     # Confidence
     if pred_proba < 0.4:
@@ -233,7 +245,7 @@ def predict_batch(features_list: List[StudentFeatures]) -> List[PredictionRespon
     predictions = []
 
     for i, prob in enumerate(pred_probas):
-        pred = int(prob > 0.3)  # Baisser seuil de 0.5 à 0.3 pour détecter plus de risques
+        pred = int(prob > 0.05)  # Seuil tres bas (5%) car modele trop conservateur
         if prob < 0.4:
             conf = "Faible"
         elif prob < 0.6:
