@@ -197,7 +197,7 @@ def predict_single(features: StudentFeatures) -> PredictionResponse:
     except AttributeError:
         # Si le modele n'a pas predict_proba, utiliser predict
         pred_proba = model.predict(df)[0]
-    pred = int(pred_proba > 0.5)
+    pred = int(pred_proba > 0.3)  # Baisser seuil de 0.5 à 0.3 pour détecter plus de risques
 
     # Confidence
     if pred_proba < 0.4:
@@ -233,7 +233,7 @@ def predict_batch(features_list: List[StudentFeatures]) -> List[PredictionRespon
     predictions = []
 
     for i, prob in enumerate(pred_probas):
-        pred = int(prob > 0.5)
+        pred = int(prob > 0.3)  # Baisser seuil de 0.5 à 0.3 pour détecter plus de risques
         if prob < 0.4:
             conf = "Faible"
         elif prob < 0.6:
