@@ -1,15 +1,24 @@
 from datetime import datetime, timezone
 import os
+from typing import List
 
 import psycopg2
 import requests
 from fastapi import FastAPI
+from pydantic import ValidationError
+
+from src.api.predict import (
+    StudentFeatures,
+    PredictionResponse,
+    predict_single,
+    predict_batch,
+)
 
 
 app = FastAPI(
     title="EdTech Learning Analytics API",
-    description="API Jour 1 pour valider la connectivité des services.",
-    version="0.1.0",
+    description="API Jour 4 avec prediction depuis MLflow Registry",
+    version="0.2.0",
 )
 
 
@@ -57,3 +66,27 @@ def health() -> dict[str, str]:
         "mlflow": get_mlflow_status(),
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
+
+
+@app.post("/predict", response_model=PredictionResponse)
+def predict(features: StudentFeatures) -> PredictionResponse:
+    """Predit le decrochage pour un etudiant."""
+    try:
+        return predict_single(features)
+    except ValidationError as e:
+        raise ValueError(f"Validation error: {e}")
+    except Exception as e:
+        raise RuntimeError(f"Prediction error: {e}")
+
+
+@app.post("/batch_predict", response_model=List[PredictionResponse])
+def batch_predict(features_list: List[StudentFeatures]) -> List[PredictionResponse]:
+    """Predit le decrochage pour plusieurs etudiants."""
+    if not features_list:
+        raise ValueError("features_list cannot be empty")
+    try:
+        return predict_batch(features_list)
+    except ValidationError as e:
+        raise ValueError(f"Validation error: {e}")
+    except Exception as e:
+        raise RuntimeError(f"Prediction error: {e}")

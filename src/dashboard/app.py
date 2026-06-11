@@ -93,10 +93,84 @@ except Exception as e:
 
 st.divider()
 
+# Prediction
+st.subheader("🔮 Prediction - Decrochage etudiant")
+st.markdown("Entrez les donnees d'un etudiant pour predire s'il va decrocher.")
+
+with st.form("prediction_form"):
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        age = st.number_input("Age", min_value=15, max_value=30, value=18)
+        travel_time = st.slider("Temps trajet (1-4)", 1, 4, 2)
+        study_time = st.slider("Temps etude (1-4)", 1, 4, 3)
+        failures = st.number_input("Echecs", min_value=0, max_value=10, value=0)
+        absences = st.number_input("Absences", min_value=0, max_value=93, value=2)
+    with col2:
+        grade_1 = st.number_input("Note periode 1", min_value=0, max_value=20, value=14)
+        grade_2 = st.number_input("Note periode 2", min_value=0, max_value=20, value=15)
+        final_grade = st.number_input("Note finale", min_value=0, max_value=20, value=16)
+        weekday_alcohol = st.slider("Alcool semaine (1-5)", 1, 5, 1)
+        weekend_alcohol = st.slider("Alcool weekend (1-5)", 1, 5, 2)
+    with col3:
+        school = st.selectbox("Ecole", ["GP", "MS"])
+        sex = st.selectbox("Sexe", ["M", "F"])
+        address = st.selectbox("Adresse", ["U", "R"])
+        higher = st.selectbox("Vise superieur", ["yes", "no"])
+        internet = st.selectbox("Internet", ["yes", "no"])
+
+    submitted = st.form_submit_button("🔍 Predire")
+
+    if submitted:
+        payload = {
+            "age": age,
+            "travel_time": travel_time,
+            "study_time": study_time,
+            "failures": failures,
+            "family_rel": 4,
+            "free_time": 3,
+            "going_out": 3,
+            "weekday_alcohol": weekday_alcohol,
+            "weekend_alcohol": weekend_alcohol,
+            "health": 4,
+            "absences": absences,
+            "grade_1": grade_1,
+            "grade_2": grade_2,
+            "final_grade": final_grade,
+            "mother_edu": 2,
+            "father_edu": 2,
+            "mother_job": "services",
+            "father_job": "other",
+            "school": school,
+            "sex": sex,
+            "address": address,
+            "famsize": "GT3",
+            "pstatus": "T",
+            "schoolsup": "no",
+            "famsup": "yes",
+            "paid": "no",
+            "activities": "yes",
+            "nursery": "yes",
+            "higher": higher,
+            "internet": internet,
+            "romantic": "no",
+        }
+        try:
+            r = requests.post(f"{API_URL}/predict", json=payload, timeout=10)
+            r.raise_for_status()
+            result = r.json()
+            pred_label = "🔴 Decroche" if result["prediction"] == 1 else "🟢 Actif"
+            st.success(f"Prediction : **{pred_label}**")
+            st.info(f"Probabilite de decrochage : **{result['probability']*100:.1f}%**")
+            st.info(f"Confiance : **{result['confidence']}**")
+        except Exception as e:
+            st.error(f"Erreur prediction : {e}")
+
+st.divider()
+
 # Resultats Jour 2
 st.subheader("📋 Resultats Jour 2 - Data Pipeline")
 st.markdown("- 649 etudiants charges et nettoyes")
 st.markdown("- 10 features engineering creees")
 st.markdown("- 9/9 tests qualite passes")
 st.markdown("- Dataset ML-ready : 519 train / 130 test | Taux decrochage : 15.4%")
-st.info("Jour 4 : API FastAPI avec endpoint prediction depuis MLflow Registry")
+st.success("Jour 4 : API FastAPI avec endpoint prediction depuis MLflow Registry ✅")
