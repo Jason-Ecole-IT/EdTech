@@ -99,41 +99,89 @@ with tab2:
         try:
             df = pd.read_csv(uploaded_file)
             st.success(f"Loaded {len(df)} students")
-            if st.button("🚀 Predict All", type="primary"):
-                with st.spinner("Predicting..."):
-                    students = df.to_dict("records")
-                    for student in students:
-                        student.setdefault("family_rel", 4)
-                        student.setdefault("free_time", 3)
-                        student.setdefault("going_out", 3)
-                        student.setdefault("health", 4)
-                        student.setdefault("mother_edu", 2)
-                        student.setdefault("father_edu", 2)
-                        student.setdefault("mother_job", "services")
-                        student.setdefault("father_job", "other")
-                        student.setdefault("pstatus", "T")
-                        student.setdefault("schoolsup", "no")
-                        student.setdefault("famsup", "yes")
-                        student.setdefault("paid", "no")
-                        student.setdefault("activities", "yes")
-                        student.setdefault("nursery", "yes")
-                        student.setdefault("internet", "yes")
-                        student.setdefault("romantic", "no")
-                    try:
-                        r = requests.post(f"{API_URL}/batch_predict", json=students, timeout=30)
-                        r.raise_for_status()
-                        results = r.json()
-                        df["prediction"] = ["Dropout" if r["prediction"] == 1 else "Active" for r in results]
-                        df["probability"] = [f"{r['probability']*100:.1f}%" for r in results]
-                        df["confidence"] = [r["confidence"] for r in results]
-                        st.success("Predictions completed!")
-                        st.dataframe(df, use_container_width=True)
-                        csv = df.to_csv(index=False)
-                        st.download_button("� Download Results", csv, "predictions.csv", "text/csv")
-                    except Exception as e:
-                        st.error(f"Batch prediction error: {e}")
+
+            column_mapping = {
+                "School": "school",
+                "Gender": "sex",
+                "Age": "age",
+                "Grade_1": "grade_1",
+                "Grade_2": "grade_2",
+                "Final_Grade": "final_grade",
+                "Number_of_Failures": "failures",
+                "Number_of_Absences": "absences",
+                "Study_Time": "study_time",
+                "Travel_Time": "travel_time",
+                "Weekday_Alcohol_Consumption": "weekday_alcohol",
+                "Weekend_Alcohol_Consumption": "weekend_alcohol",
+            }
+
+            df = df.rename(columns=column_mapping)
+
+            required_cols = ["age", "school", "sex", "grade_1", "grade_2", "final_grade", "failures", "absences", "study_time", "travel_time", "weekday_alcohol", "weekend_alcohol"]
+            missing = [c for c in required_cols if c not in df.columns]
+            if missing:
+                st.error(f"Missing required columns: {missing}")
+            else:
+                st.success("All required columns found!")
+                sample_size = st.number_input("Sample size (for testing)", min_value=1, max_value=len(df), value=10)
+                if st.button("🚀 Predict All", type="primary"):
+                    with st.spinner("Predicting..."):
+                        students = df.head(sample_size).to_dict("records")
+                        cleaned_students = []
+                        for student in students:
+                            cleaned = {
+                                "age": student.get("age", 18),
+                                "travel_time": student.get("travel_time", 2),
+                                "study_time": student.get("study_time", 3),
+                                "failures": student.get("failures", 0),
+                                "family_rel": student.get("family_rel", student.get("Family_Relationship", 4)),
+                                "free_time": student.get("free_time", student.get("Free_Time", 3)),
+                                "going_out": student.get("going_out", student.get("Going_Out", 3)),
+                                "weekday_alcohol": student.get("weekday_alcohol", student.get("Weekday_Alcohol_Consumption", 1)),
+                                "weekend_alcohol": student.get("weekend_alcohol", student.get("Weekend_Alcohol_Consumption", 1)),
+                                "health": student.get("health", student.get("Health_Status", 4)),
+                                "absences": student.get("absences", student.get("Number_of_Absences", 0)),
+                                "grade_1": student.get("grade_1", student.get("Grade_1", 14)),
+                                "grade_2": student.get("grade_2", student.get("Grade_2", 15)),
+                                "final_grade": student.get("final_grade", student.get("Final_Grade", 16)),
+                                "mother_edu": student.get("mother_edu", student.get("Mother_Education", 2)),
+                                "father_edu": student.get("father_edu", student.get("Father_Education", 2)),
+                                "mother_job": student.get("mother_job", student.get("Mother_Job", "services")),
+                                "father_job": student.get("father_job", student.get("Father_Job", "other")),
+                                "school": student.get("school", student.get("School", "GP")),
+                                "sex": student.get("sex", student.get("Gender", "M")),
+                                "address": student.get("address", student.get("Address", "U")),
+                                "famsize": student.get("famsize", student.get("Family_Size", "GT3")),
+                                "pstatus": student.get("pstatus", student.get("Parental_Status", "T")),
+                                "schoolsup": student.get("schoolsup", student.get("School_Support", "no")),
+                                "famsup": student.get("famsup", student.get("Family_Support", "yes")),
+                                "paid": student.get("paid", student.get("Extra_Paid_Class", "no")),
+                                "activities": student.get("activities", student.get("Extra_Curricular_Activities", "yes")),
+                                "nursery": student.get("nursery", student.get("Attended_Nursery", "yes")),
+                                "higher": student.get("higher", student.get("Wants_Higher_Education", "yes")),
+                                "internet": student.get("internet", student.get("Internet_Access", "yes")),
+                                "romantic": student.get("romantic", student.get("In_Relationship", "no")),
+                            }
+                            cleaned_students.append(cleaned)
+                        st.write(f"Testing with {len(cleaned_students)} students")
+                        st.write("Sample cleaned payload:", cleaned_students[0] if cleaned_students else {})
+                        try:
+                            r = requests.post(f"{API_URL}/batch_predict", json=cleaned_students, timeout=30)
+                            r.raise_for_status()
+                            results = r.json()
+                            df_sample = df.head(sample_size).copy()
+                            df_sample["prediction"] = ["Dropout" if r["prediction"] == 1 else "Active" for r in results]
+                            df_sample["probability"] = [f"{r['probability']*100:.1f}%" for r in results]
+                            df_sample["confidence"] = [r["confidence"] for r in results]
+                            st.success(f"Predictions completed for {len(results)} students!")
+                            st.dataframe(df_sample, use_container_width=True)
+                            csv = df_sample.to_csv(index=False)
+                            st.download_button("📥 Download Results", csv, "predictions.csv", "text/csv")
+                        except Exception as e:
+                            st.error(f"Batch prediction error: {e}")
+                            if hasattr(e, 'response') and e.response is not None:
+                                st.text(f"API response: {e.response.text}")
         except Exception as e:
             st.error(f"Error reading CSV: {e}")
     else:
         st.info("Upload a CSV file with student data.")
-        st.markdown("**Required columns:** age, school, sex, grade_1, grade_2, final_grade, failures, absences, study_time, travel_time, weekday_alcohol, weekend_alcohol")

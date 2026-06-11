@@ -65,16 +65,26 @@ class PredictionResponse(BaseModel):
 
 
 def load_model_from_registry():
-    """Charge le modele depuis MLflow Registry."""
+    """Charge le modele depuis les artifacts locaux."""
     try:
-        model_uri = f"models:/{MODEL_NAME}/{STAGE}"
+        # Charger le modele gradient_boosting le plus recent
+        model_uri = "mlruns/artifacts/1/models/m-ce58e543a18b41a28c77cf9fa6b3ec58/artifacts"
         logger.info(f"Chargement du modele depuis {model_uri}")
         model = mlflow.pyfunc.load_model(model_uri)
         logger.info("Modele charge avec succes")
         return model
     except Exception as e:
         logger.error(f"Erreur chargement modele: {e}")
-        raise
+        # Fallback: essayer un autre modele
+        try:
+            model_uri = "mlruns/artifacts/1/models/m-bc00d2a88b4c4b4689c455e99e0c9b6d/artifacts"
+            logger.info(f"Tentative chargement depuis: {model_uri}")
+            model = mlflow.pyfunc.load_model(model_uri)
+            logger.info("Modele charge avec succes")
+            return model
+        except Exception as e2:
+            logger.error(f"Erreur chargement fallback: {e2}")
+            raise RuntimeError(f"Impossible de charger le modele: {e}")
 
 
 _model_cache = None
@@ -91,8 +101,7 @@ def get_model():
 def build_feature_dict(features: StudentFeatures) -> dict:
     """Construit le dictionnaire de features pour le modele.
 
-    Le modele attend 61 features. On construit les features engineered
-    comme dans le pipeline Jour 2.
+    Le modele attend 61 features one-hot encoded comme dans le pipeline Jour 2.
     """
     base = {
         "Age": features.age,
@@ -111,24 +120,43 @@ def build_feature_dict(features: StudentFeatures) -> dict:
         "Final_Grade": features.final_grade,
         "Mother_Education": features.mother_edu,
         "Father_Education": features.father_edu,
-        "Mother_Job": features.mother_job,
-        "Father_Job": features.father_job,
-        "School": features.school,
-        "Sex": features.sex,
-        "Address": features.address,
-        "Family_Size": features.famsize,
-        "Parent_Status": features.pstatus,
-        "School_Support": features.schoolsup,
-        "Family_Support": features.famsup,
-        "Paid_Classes": features.paid,
-        "Extra_Curricular": features.activities,
-        "Nursery": features.nursery,
-        "Wants_Higher_Education": features.higher,
-        "Internet_Access": features.internet,
-        "Romantic_Relationship": features.romantic,
     }
 
-    # Features engineered (simplifie pour l'API)
+    # One-hot encoding des variables categorielles
+    base["School_GP"] = 1 if features.school == "GP" else 0
+    base["School_MS"] = 1 if features.school == "MS" else 0
+    base["Sex_M"] = 1 if features.sex == "M" else 0
+    base["Sex_F"] = 1 if features.sex == "F" else 0
+    base["Address_R"] = 1 if features.address == "R" else 0
+    base["Address_U"] = 1 if features.address == "U" else 0
+    base["Family_Size_LE3"] = 1 if features.famsize == "LE3" else 0
+    base["Family_Size_GT3"] = 1 if features.famsize == "GT3" else 0
+    base["Parent_Status_T"] = 1 if features.pstatus == "T" else 0
+    base["Parent_Status_A"] = 1 if features.pstatus == "A" else 0
+    base["School_Support_yes"] = 1 if features.schoolsup == "yes" else 0
+    base["School_Support_no"] = 1 if features.schoolsup == "no" else 0
+    base["Family_Support_yes"] = 1 if features.famsup == "yes" else 0
+    base["Family_Support_no"] = 1 if features.famsup == "no" else 0
+    base["Paid_Classes_yes"] = 1 if features.paid == "yes" else 0
+    base["Paid_Classes_no"] = 1 if features.paid == "no" else 0
+    base["Extra_Curricular_Activities_yes"] = 1 if features.activities == "yes" else 0
+    base["Extra_Curricular_Activities_no"] = 1 if features.activities == "no" else 0
+    base["Attended_Nursery_yes"] = 1 if features.nursery == "yes" else 0
+    base["Attended_Nursery_no"] = 1 if features.nursery == "no" else 0
+    base["Wants_Higher_Education_yes"] = 1 if features.higher == "yes" else 0
+    base["Wants_Higher_Education_no"] = 1 if features.higher == "no" else 0
+    base["Internet_Access_yes"] = 1 if features.internet == "yes" else 0
+    base["Internet_Access_no"] = 1 if features.internet == "no" else 0
+    base["Romantic_Relationship_yes"] = 1 if features.romantic == "yes" else 0
+    base["Romantic_Relationship_no"] = 1 if features.romantic == "no" else 0
+
+    # Jobs one-hot (valeurs possibles)
+    jobs = ["teacher", "health", "services", "at_home", "other"]
+    for job in jobs:
+        base[f"Mother_Job_{job}"] = 1 if features.mother_job == job else 0
+        base[f"Father_Job_{job}"] = 1 if features.father_job == job else 0
+
+    # Features engineered
     avg_grade = (features.grade_1 + features.grade_2) / 2
     academic_score = (avg_grade + features.final_grade) / 2
 
