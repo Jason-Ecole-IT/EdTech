@@ -27,20 +27,20 @@ st.markdown("""
 
 st.markdown("""
 <div class="main-header">
-    <h1 style="color: white; margin: 0;">🎓 EdTech Dropout Prediction</h1>
-    <p style="color: white; opacity: 0.9; margin: 0.5rem 0 0 0;">Predict student dropout risk with AI</p>
+    <h1 style="color: white; margin: 0;">🎓 Prédiction d'Abandon Scolaire</h1>
+    <p style="color: white; opacity: 0.9; margin: 0.5rem 0 0 0;">Prédire le risque d'abandon des élèves avec l'IA</p>
 </div>
 """, unsafe_allow_html=True)
 
-tab1, tab2 = st.tabs(["Batch Upload", "Students at Risk"])
+tab1, tab2 = st.tabs(["Import par Lot", "Élèves à Risque"])
 
 with tab1:
-    st.markdown("### Batch Prediction")
-    uploaded_file = st.file_uploader("Upload CSV", type=["csv"])
+    st.markdown("### Prédiction par Lot")
+    uploaded_file = st.file_uploader("Télécharger un fichier CSV", type=["csv"])
     if uploaded_file:
         try:
             df = pd.read_csv(uploaded_file)
-            st.success(f"Loaded {len(df)} students")
+            st.success(f"{len(df)} élèves chargés")
 
             column_mapping = {
                 "School": "school",
@@ -118,21 +118,21 @@ with tab1:
                             df_display = df_sample[columns_to_show].copy()
                             # Sauvegarder dans session_state pour l'onglet Students at Risk
                             st.session_state["batch_results"] = df_display.copy()
-                            st.success(f"Predictions completed for {len(results)} students!")
+                            st.success(f"Prédictions terminées pour {len(results)} élèves!")
                             st.dataframe(df_display, use_container_width=True)
                             csv = df_display.to_csv(index=False)
-                            st.download_button("📥 Download Results", csv, "predictions.csv", "text/csv")
+                            st.download_button("📥 Télécharger les Résultats", csv, "predictions.csv", "text/csv")
                         except Exception as e:
-                            st.error(f"Batch prediction error: {e}")
+                            st.error(f"Erreur de prédiction par lot: {e}")
                             if hasattr(e, 'response') and e.response is not None:
                                 st.text(f"API response: {e.response.text}")
         except Exception as e:
-            st.error(f"Error reading CSV: {e}")
+            st.error(f"Erreur de lecture du CSV: {e}")
     else:
-        st.info("Upload a CSV file with student data.")
+        st.info("Téléchargez un fichier CSV avec les données des élèves.")
 
 with tab2:
-    st.markdown("### 🚨 Students at Risk (Dropout)")
+    st.markdown("### 🚨 Élèves à Risque (Abandon)")
 
     if "batch_results" in st.session_state and st.session_state["batch_results"] is not None:
         df_risk = st.session_state["batch_results"]
@@ -140,20 +140,20 @@ with tab2:
         # Filtres
         col1, col2, col3 = st.columns(3)
         with col1:
-            min_age = st.number_input("Min Age", min_value=15, max_value=30, value=15)
-            max_age = st.number_input("Max Age", min_value=15, max_value=30, value=30)
+            min_age = st.number_input("Âge Min", min_value=15, max_value=30, value=15)
+            max_age = st.number_input("Âge Max", min_value=15, max_value=30, value=30)
         with col2:
-            school_filter = st.selectbox("School", ["All", "GP", "MS"])
-            sex_filter = st.selectbox("Sex", ["All", "M", "F"])
+            school_filter = st.selectbox("École", ["Tous", "GP", "MS"])
+            sex_filter = st.selectbox("Sexe", ["Tous", "M", "F"])
         with col3:
-            min_prob = st.slider("Min Dropout Probability", 0.0, 1.0, 0.5, 0.1)
+            min_prob = st.slider("Probabilité Min. d'Abandon", 0.0, 1.0, 0.5, 0.1)
 
         # Appliquer les filtres
         df_filtered = df_risk.copy()
         df_filtered = df_filtered[(df_filtered["age"] >= min_age) & (df_filtered["age"] <= max_age)]
-        if school_filter != "All":
+        if school_filter != "Tous":
             df_filtered = df_filtered[df_filtered["school"] == school_filter]
-        if sex_filter != "All":
+        if sex_filter != "Tous":
             df_filtered = df_filtered[df_filtered["sex"] == sex_filter]
 
         # Filtrer par probabilité de dropout
@@ -167,11 +167,11 @@ with tab2:
         risk_columns = ["school", "sex", "age", "absences", "grade_1", "grade_2", "final_grade", "prediction", "probability", "confidence"]
 
         if not df_risk_only.empty:
-            st.success(f"Found {len(df_risk_only)} students at risk")
+            st.success(f"{len(df_risk_only)} élèves à risque trouvés")
             st.dataframe(df_risk_only[risk_columns], use_container_width=True)
             csv_risk = df_risk_only[risk_columns].to_csv(index=False)
-            st.download_button("📥 Download At-Risk Students", csv_risk, "at_risk_students.csv", "text/csv")
+            st.download_button("📥 Télécharger Élèves à Risque", csv_risk, "at_risk_students.csv", "text/csv")
         else:
-            st.warning("No students at risk match the filters")
+            st.warning("Aucun élève à risque ne correspond aux filtres")
     else:
-        st.info("No prediction results available. Upload and predict a CSV file first.")
+        st.info("Aucun résultat de prédiction disponible. Téléchargez et prédisez un fichier CSV d'abord.")

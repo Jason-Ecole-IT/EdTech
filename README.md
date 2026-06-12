@@ -1,70 +1,136 @@
-# 🎓 EdTech - Analytics Pédagogique & Prédiction Décrochage
+# 🎓 EdTech - Prédiction d'Abandon Scolaire
 
-Projet de learning analytics pour analyser les données LMS, personnaliser les parcours éducatifs et prédire les risques de décrochage.
+Projet de machine learning pour prédire le risque de décrochage scolaire des élèves à l'aide de l'IA.
 
-## Documentation projet
+## 📋 Description
 
-- Cahier des charges global : `docs/cahier_des_charges.md`
-- Architecture technique : `docs/architecture.md`
-- Backlog Agile : `docs/backlog.md`
-- Validation Jour 1 : `docs/validation_jour1.md`
-- Validation Jour 2 : `docs/validation_jour2.md`
-- Validation Jour 3 : `docs/validation_jour3.md`
-- Daily meetings : `docs/daily/`
+Ce projet utilise un modèle RandomForest avec `class_weight='balanced'` pour prédire la probabilité d'abandon scolaire des étudiants. Le modèle a été entraîné sur des données historiques et est calibré pour fournir des probabilités significatives.
 
-## Architecture technique
+## 🏗️ Architecture
 
 ```text
-Données LMS
+Données brutes (CSV)
    ↓
-PostgreSQL
+Modèle RandomForest (class_weight='balanced')
    ↓
-Pipeline Pandas
+FastAPI (API de prédiction)
    ↓
-Dataset ML-ready
+Streamlit Dashboard (Interface utilisateur)
    ↓
-MLflow + modèles ML
-   ↓
-FastAPI
-   ↓
-Streamlit dashboards
-   ↓
-Prometheus/Grafana monitoring
+MLflow (Tracking des modèles)
 ```
 
-## Démarrage rapide
+## 🚀 Démarrage rapide
 
-1. Copier le fichier d'environnement : `Copy-Item .env.example .env`
+### Prérequis
 
-2. Lancer les services : `docker compose up --build`
+- Python 3.8+
+- pip
 
-3. Vérifier les services :
+### Installation
 
-- API : ``http://localhost:8000``
-- Swagger : ``http://localhost:8000/docs``
-- Dashboard Streamlit : ``http://localhost:8501``
-- MLflow : ``http://localhost:5000``
-- Prometheus : ``http://localhost:9090``
-- Grafana : ``http://localhost:3000``
+```bash
+pip install -r requirements.txt
+```
 
-## Lancer les différents pipelines
+### Lancer l'application
 
-- Data pipeline : `python -m src.data.pipeline`
-- ML Pipeline : `python -m src.ml.pipeline`
+Ouvre **3 terminaux** dans le répertoire du projet :
 
-## Identifiants Grafana
+**Terminal 1 — MLflow**
+```bash
+mlflow ui --port 5000 --backend-store-uri sqlite:///mlruns/mlflow.db --default-artifact-root ./mlruns/artifacts
+```
 
-- Utilisateur : `admin`
-- Mot de passe : `admin`
+**Terminal 2 — FastAPI**
+```bash
+uvicorn src.api.main:app --port 8000 --reload
+```
 
-## Planning
+**Terminal 3 — Streamlit Dashboard**
+```bash
+streamlit run src/dashboard/app.py
+```
 
-- Jour 1 : Infrastructure & découverte
-- Jour 2 : Data Pipeline & Processing
-- Jour 3 : Machine Learning & MLOps
-- Jour 4 : Deployment & API
-- Jour 5 : Monitoring, tests & présentation
+### Accéder aux services
 
-## EdTech
+- **Dashboard Streamlit** : http://localhost:8501
+- **API FastAPI** : http://localhost:8000
+- **API Documentation (Swagger)** : http://localhost:8000/docs
+- **MLflow UI** : http://localhost:5000
 
-Lien Data Set : `https://www.kaggle.com/datasets/abdullah0a/student-dropout-analysis-and-prediction-dataset`
+## 📊 Dashboard
+
+Le dashboard Streamlit propose 2 onglets :
+
+1. **Import par Lot** : Téléchargez un fichier CSV avec les données des élèves pour obtenir des prédictions en masse
+2. **Élèves à Risque** : Visualisez et filtrez les élèves identifiés comme étant à risque d'abandon
+
+### Format CSV attendu
+
+Les colonnes requises pour le fichier CSV :
+- School, Gender, Age, Address, Family_Size, Parental_Status
+- Mother_Education, Father_Education, Mother_Job, Father_Job
+- Reason_for_Choosing_School, Guardian, Travel_Time, Study_Time
+- Number_of_Failures, School_Support, Family_Support, Extra_Paid_Class
+- Extra_Curricular_Activities, Attended_Nursery, Wants_Higher_Education
+- Internet_Access, In_Relationship, Family_Relationship, Free_Time, Going_Out
+- Weekend_Alcohol_Consumption, Weekday_Alcohol_Consumption, Health_Status
+- Number_of_Absences, Grade_1, Grade_2, Final_Grade, Dropped_Out
+
+### Fichier de test
+
+Un fichier de test est disponible : `test_students.csv` avec 12 élèves (10 dropout, 2 non-dropout).
+
+## 🤖 Modèle ML
+
+**Modèle actuel** : RandomForestClassifier
+- **Paramètres** : n_estimators=200, max_depth=15, min_samples_split=5, class_weight='balanced'
+- **Seuil de prédiction** : 0.5 (50%)
+- **Calibration** : Bonne calibration grâce à class_weight='balanced'
+
+**Critères les plus importants** :
+1. Final_Grade (29.5%)
+2. Grade_2 (13.7%)
+3. Grade_1 (11.5%)
+4. Number_of_Failures (3.3%)
+5. School (2.8%)
+
+## 🔧 Scripts utiles
+
+- `train_simple.py` : Entraîner le modèle RandomForest avec class_weight='balanced'
+- `verify_predictions.py` : Vérifier la précision des prédictions par rapport aux données réelles
+- `create_test_file.py` : Créer un fichier de test avec des étudiants dropout et non-dropout
+
+## 📈 Performance
+
+Le modèle atteint une précision de **91.7%** sur le jeu de test (11/12 prédictions correctes).
+
+## 📂 Structure du projet
+
+```
+PROJECT5/
+├── data/
+│   ├── raw/student dropout.csv          # Données brutes
+│   └── test_students.csv                # Fichier de test
+├── mlruns/                              # Artefacts MLflow
+├── src/
+│   ├── api/
+│   │   └── predict.py                   # API de prédiction
+│   └── dashboard/
+│       └── app.py                       # Dashboard Streamlit
+├── train_simple.py                      # Script d'entraînement
+└── test_students.csv                    # Fichier de test
+```
+
+## 📚 Dataset
+
+Source : [Kaggle Student Dropout Analysis](https://www.kaggle.com/datasets/abdullah0a/student-dropout-analysis-and-prediction-dataset)
+
+## 🎯 Fonctionnalités
+
+- ✅ Prédiction en lot via CSV
+- ✅ Filtrage des élèves à risque par âge, école, sexe et probabilité
+- ✅ Export des résultats en CSV
+- ✅ Interface en français
+- ✅ Modèle calibré avec probabilités significatives
